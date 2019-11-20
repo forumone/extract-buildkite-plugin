@@ -1,0 +1,20 @@
+name: Extract
+description: Extracts the filesystem from a Docker image
+author: Forum One
+
+requirements: [docker]
+
+configuration:
+  additionalProperties: false
+  required: [image, from]
+  properties:
+    image:
+      type: string
+    from:
+      type: string
+    to:
+      type: string
+    pull:
+      type: boolean
+    verbose:
+      type: boolean

@@ -1,0 +1,88 @@
+#!/bin/bash
+
+set -euo pipefail
+shopt -s extglob
+
+# Normalize/sanitize a POSIX path
+normalize-path() {
+  local path
+
+  # Collapse repeated forward slashes
+  # e.g., /foo//bar// ==> /foo/bar/
+  path="$(echo "$1" | tr -s / /)"
+
+  # Remove all trailing forward slashes
+  # e.g., /foo/bar/ ==> /foo/bar
+  echo -n "${path%%+(/)}"
+}
+
+# Wrapper for echo that only outputs if the verbose config option is set
+verbose() {
+  if test "${BUILDKITE_PLUGIN_EXTRACT_VERBOSE:-}" = true; then
+    echo "$@"
+  fi
+}
+
+# Variables we'll be cleaning up later
+container=
+index_file=
+
+cleanup() {
+  if test -n "$container"; then
+    docker container rm "$container" >/dev/null
+  fi
+
+  if test -n "$index_file"; then
+    rm "$index_file"
+  fi
+}
+
+trap cleanup exit
+
+image="$BUILDKITE_PLUGIN_EXTRACT_IMAGE"
+pull="${BUILDKITE_PLUGIN_EXTRACT_PULL:-true}"
+
+destination_path="${BUILDKITE_PLUGIN_EXTRACT_TO:-.}"
+
+source_path="$(normalize-path "$BUILDKITE_PLUGIN_EXTRACT_FROM")"
+
+# Determine how many path components to strip from the resulting tar archive - archiving
+# the path /var/www/html results in an archive where all paths start with html, so we
+# need to remove that prefix (but not if the path is /, which has no prefix)
+components=1
+if test "$source_path" = /; then
+  components=0
+fi
+
+echo "~~~ :docker: Extracting $image to $destination_path"
+
+# Pull the image unless the user told us not to
+if test "$pull" != false; then
+  verbose "Pulling $image"
+  docker pull "$image"
+fi
+
+# Prepare destination path
+verbose "Creating $destination_path"
+mkdir -p "$destination_path"
+
+# Run the container in order to make 'docker cp' work - since the container doesn't need
+# to actually be running, we just use /bin/true to get a stopped container
+container="$(docker run --detach "$image" /bin/true)"
+
+index_file="$(mktemp)"
+
+# Stream the filesystem archive through tar
+docker cp "$container:$source_path" - |
+  tar \
+    --file - \
+    --extract \
+    --verbose \
+    --show-transformed-names \
+    --index-file="$index_file" \
+    --strip-components "$components" \
+    --directory "$destination_path"
+
+count="$(wc -l "$index_file" | cut -d' ' -f1)"
+
+echo "Extracted $count file(s) from $source_path to $destination_path"

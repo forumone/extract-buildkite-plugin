@@ -10,7 +10,7 @@ This will extract the path `/var/www/html` from the image `example/website:lates
 steps:
   - command: tree output
     plugins:
-      - forumone/extract:
+      - forumone/extract#v0.1.0:
           image: example/website:latest
           from: /var/www/html
           to: output
@@ -22,7 +22,7 @@ This shows off all of the options - it extracts the filesystem from a local imag
 steps:
   - command: tree output
     plugins:
-      - forumone/extract:
+      - forumone/extract#v0.1.0:
           image: example/website:latest
           pull: false
 

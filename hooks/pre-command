@@ -1,27 +1,11 @@
 #!/bin/bash
 
 set -euo pipefail
-shopt -s extglob
 
-# Normalize/sanitize a POSIX path
-normalize-path() {
-  local path
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-  # Collapse repeated forward slashes
-  # e.g., /foo//bar// ==> /foo/bar/
-  path="$(echo "$1" | tr -s / /)"
-
-  # Remove all trailing forward slashes
-  # e.g., /foo/bar/ ==> /foo/bar
-  echo -n "${path%%+(/)}"
-}
-
-# Wrapper for echo that only outputs if the verbose config option is set
-verbose() {
-  if test "${BUILDKITE_PLUGIN_EXTRACT_VERBOSE:-}" = true; then
-    echo "$@"
-  fi
-}
+# shellcheck source=lib/lib.bash
+. "$root/lib/lib.bash"
 
 # Variables we'll be cleaning up later
 container=
@@ -37,14 +21,20 @@ cleanup() {
   fi
 }
 
+header "Setting up configuration"
+validate-config
+
+# Once we've finished validating the config, we can ensure that all options are set
+# appropriately. This means it's safe to set up our cleanup function since we know that
+# these are going to be created.
 trap cleanup exit
 
-image="$BUILDKITE_PLUGIN_EXTRACT_IMAGE"
-pull="${BUILDKITE_PLUGIN_EXTRACT_PULL:-true}"
+image="$(image-name)"
+pull="$(get-config-with-default pull true)"
 
-destination_path="${BUILDKITE_PLUGIN_EXTRACT_TO:-.}"
+destination_path="$(get-config-with-default to .)"
 
-source_path="$(normalize-path "$BUILDKITE_PLUGIN_EXTRACT_FROM")"
+source_path="$(normalize-path "$(get-config from)")"
 
 # Determine how many path components to strip from the resulting tar archive - archiving
 # the path /var/www/html results in an archive where all paths start with html, so we
@@ -54,10 +44,20 @@ if test "$source_path" = /; then
   components=0
 fi
 
-echo "~~~ :docker: Extracting $image to $destination_path"
+# Dump configuration in verbose mode
+verbose "Image: $image"
+verbose "Pull: $pull"
+verbose "Source path: $source_path"
+verbose "Destination path:"
+verbose "  From configuration: $destination_path"
+verbose "  On disk: $PWD/$destination_path"
+
+# Now that we've determined our config, output a new header so that folks know what's
+# going on, even without verbose enabled
+header "Extracting $image to $destination_path"
 
 # Pull the image unless the user told us not to
-if test "$pull" != false; then
+if is-truthy "$pull"; then
   verbose "Pulling $image"
   docker pull "$image"
 fi

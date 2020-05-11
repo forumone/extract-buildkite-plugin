@@ -7,7 +7,9 @@ steps:
   - label: Shellcheck
     plugins:
       - shellcheck#v1.1.2:
-          files: hooks/**
+          files:
+            - hooks/**
+            - lib/**
 
   - label: Tests
     plugins:

@@ -10,7 +10,7 @@ This will extract the path `/var/www/html` from the image `example/website:lates
 steps:
   - command: tree output
     plugins:
-      - forumone/extract#v0.1.0:
+      - forumone/extract#v0.2.0:
           image: example/website:latest
           from: /var/www/html
           to: output
@@ -22,7 +22,7 @@ This shows off all of the options - it extracts the filesystem from a local imag
 steps:
   - command: tree output
     plugins:
-      - forumone/extract#v0.1.0:
+      - forumone/extract#v0.2.0:
           image: example/website:latest
           pull: false
 
@@ -39,7 +39,7 @@ As of 0.2.0, this plugin also supports a structured object for configuration. Wh
 steps:
   - command: tree output
     plugins:
-      - forumone/extract#v0.1.0:
+      - forumone/extract#v0.2.0:
           from: /var/www/html
 
           # image name = example.website/user/repo:<pipeline slug>-build-<build number>
@@ -51,7 +51,7 @@ steps:
 steps:
   - command: tree output
     plugins:
-      - forumone/extract#v0.1.0:
+      - forumone/extract#v0.2.0:
           from: /var/www/html
 
           # image name = example.website/user/repo:<pipeline slug>-drupal-build-<build number>
@@ -64,7 +64,7 @@ steps:
 steps:
   - command: tree output
     plugins:
-      - forumone/extract#v0.1.0:
+      - forumone/extract#v0.2.0:
           from: /var/www/html
 
           # image name = example.website/user/repo:latest

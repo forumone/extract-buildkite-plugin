@@ -6,10 +6,18 @@ requirements: [docker]
 
 configuration:
   additionalProperties: false
-  required: [image, from]
+  required: [from]
   properties:
     image:
-      type: string
+      type: [string, object]
+      additionalProperties: false
+      properties:
+        repository:
+          type: string
+        service:
+          type: string
+        tag:
+          type: string
     from:
       type: string
     to:
@@ -17,4 +25,6 @@ configuration:
     pull:
       type: boolean
     verbose:
+      type: boolean
+    debug:
       type: boolean

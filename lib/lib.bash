@@ -324,7 +324,10 @@ image-tag() {
 # USAGE:
 #   generate-name
 #
-# Generates a name for the image based on configuration. It will use the configuration to determine which tag to apply, and then attemps to look up the repository
+# Generates a name for the image based on configuration. It will use the configuration to
+# determine which tag to apply, and then attemps to look up the repository based on either
+# this plugin's configuration or the Docker Compose plugin's configuration, whichever
+# comes first.
 #
 # Note that this function should not be called directly in the plugin hook. See the
 # image-name function instead.
